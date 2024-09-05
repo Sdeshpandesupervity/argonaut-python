@@ -31,7 +31,12 @@ stages:
               python -m pip install --upgrade pip
               pip install -r requirements.txt
             displayName: 'Install dependencies'
-
+          - script: |
+              # Download and install the latest SonarQube Scanner
+              wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-latest-linux.zip
+              unzip sonar-scanner-cli-latest-linux.zip
+              export PATH=$(pwd)/sonar-scanner-*/bin:$PATH
+            displayName: 'Install SonarQube Scanner'
           - task: SonarQubePrepare@6
             inputs:
               SonarQube: 'sonarqube'  # Name of the SonarQube service connection in Azure DevOps
