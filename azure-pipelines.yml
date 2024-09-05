@@ -1,7 +1,7 @@
 trigger:
   branches:
     include:
-      - master
+      - main
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -33,24 +33,24 @@ stages:
               pip install -r requirements.txt
             displayName: 'Install dependencies'
 
-          - script: |
-              wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-3.0.0.1492-linux.zip
-              unzip sonar-scanner-cli-3.0.0.1492-linux.zip
-              export PATH=$(pwd)/sonar-scanner-3.0.0.1492-linux/bin:$PATH
-            displayName: 'Install SonarQube Scanner'
 
-          - script: |
-              sonar-scanner \
-                -Dsonar.projectKey=$(SONAR_PROJECT_KEY) \
-                -Dsonar.projectName=$(SONAR_PROJECT_NAME) \
-                -Dsonar.projectVersion=$(SONAR_PROJECT_VERSION) \
-                -Dsonar.sources=. \
-                -Dsonar.host.url=$(SONARQUBE_SERVER) \
-                -Dsonar.login=$(SONARQUBE_TOKEN)
+          - task: SonarQubePrepare@6
+            inputs:
+              SonarQube: 'sonarqube'  # Name of the SonarQube service connection in Azure DevOps
+              scannerMode: 'CLI'
+              configMode: 'manual'
+              cliProjectKey: '$(SONAR_PROJECT_KEY)'
+              cliProjectName: '$(SONAR_PROJECT_NAME)'
+              cliSources: '.'
+              extraProperties: |
+                sonar.projectVersion=$(SONAR_PROJECT_VERSION)
+                sonar.host.url=$(SONARQUBE_SERVER)
+                sonar.login=$(SONARQUBE_TOKEN)
+                sonar.python.version=3.x
+            displayName: 'Prepare SonarQube Analysis'
+
+          - task: SonarQubeAnalyze@6
             displayName: 'Run SonarQube Analysis'
-            env:
-              PATH: $(pwd)/sonar-scanner-4.7.0.2747-linux/bin:$(PATH)  # Ensure sonar-scanner is in the PATH
-
           - task: SonarQubePublish@6
             inputs:
               pollingTimeoutSec: '300'
